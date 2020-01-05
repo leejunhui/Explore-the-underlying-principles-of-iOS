@@ -1,6 +1,6 @@
 # Explore-the-underlying-principles-of-iOS
 
-![iOS 底层探索](https://raw.githubusercontent.com/Leejunhui/Explore-the-underlying-principles-of-iOS/master/img/iOS 底层探索.png)
+![iOS 底层探索](https://raw.githubusercontent.com/Leejunhui/Explore-the-underlying-principles-of-iOS/master/img/iOS底层探索.png)
 
 # 探索 `iOS` 底层原理
 
