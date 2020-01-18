@@ -1,16 +1,12 @@
-![img](https://upload-images.jianshu.io/upload_images/95471-c011e87770b1ae1d.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp)
-
-# iOS 底层探索 - calloc 和 isa
+![iOS 底层探索 - calloc 和 isa](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119022152.jpg)
 
 上一篇文章主要我们探索了 `iOS`  对象的 `alloc` 和 `init` 以及对象是怎么开辟内存以及初始化的，如果在对象身上增加一些属性，是否会影响内存开辟呢？还有一个遗留问题就是通过 `calloc` ，我们的对象有了内存地址，但是对象结构里面的 `isa` 是怎么关联到我们的对象的内存地址的呢。
 
-<a name="qYVo0"></a>
-# 一、`calloc` 底层探索
+# `calloc` 底层探索
 
 在探索 `calloc` 底层前，我们先补充一下内存对齐相关的知识点。
 
-<a name="ee5b93f3"></a>
-## 1.1 内存对齐三原则
+## 内存对齐三原则
 
 在 `iOS` 中，对象的属性需要进行内存对齐，而对象本身也需要进行内存对齐。<br />内存对齐有三原则
 
@@ -26,8 +22,7 @@
 - 结构体里面的嵌套结构体大小要以该**嵌套结构体最大元素大小的整数倍**
 - **整个 **`**Struct**` **的地址必须是最大字节的整数倍**
 
-<a name="b11a31a7"></a>
-## 1.2 对象申请内存和系统开辟内存
+## 对象申请内存和系统开辟内存
 
 我们通过打印下面的代码：
 
@@ -64,16 +59,16 @@ size_t class_getInstanceSize(Class cls)
 
 也就是说 `class_getInstanceSize` 会输出 8 个字节，`malloc_size` 会输出 16 个字节，当然前提是该对象没有任何属性。
 
-<a name="ff23f086"></a>
-## 1.3 探索 calloc 底层
+## 探索 calloc 底层
 
 我们从 `calloc` 函数出发，但是我们直接在 `libObjc` 的源码中是找不到其对应实现的，通过观察 Xcode 我们知道其实应该找 `libMalloc` 源码才对:
 
-[![](https://user-gold-cdn.xitu.io/2019/12/24/16f35265ae536110?w=680&h=536&f=jpeg&s=80287)](https://imgchr.com/i/QTO39A)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119021547.jpg)
 
 这里有个小技巧，其实我们研究的是 `calloc` 的底层原理，而 `libObjc` 和 `libMalloc` 是相互独立的，所以在 `libMalloc` 源码里面，我们没必要去走 `calloc` 前面的流程了。我们通过断点调试 `libObjc` 源码可以知道第二个参数是 40: (这是因为当前发送 `alloc` 消息的对象有 4 个属性，每个属性 8 个字节，再加上 isa 的 8 个字节，所以就是 40 个字节)
 
-[![](https://user-gold-cdn.xitu.io/2019/12/24/16f35265aea6aeb3?w=680&h=292&f=jpeg&s=34893)](https://imgchr.com/i/QTjuJH)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119021606.jpg)
+
 
 接下来我们打开 `libMalloc` 的源码，在新建的 target 中直接手动声明如下的代码:
 
@@ -84,7 +79,8 @@ NSLog(@"%lu",malloc_size(p));
 
 但 `Command + Run` 之后我们会看到报错信息:
 
-[![](https://user-gold-cdn.xitu.io/2019/12/24/16f35265b04a3886?w=680&h=204&f=jpeg&s=46381)](https://imgchr.com/i/QTvVcn)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119021741.jpg)
+
 
 这个时候我们会使用搜索大法，直接 `Command + Shift + F` 进行全局搜索对应的符号，但是会发现找不到，我们再仔细观察，这些符号都是位于 `.o` 文件里面的，所以我们可以去掉符号前面的下划线再进行搜索，这个时候就可以把对应的代码注释然后重新运行了。
 
@@ -96,7 +92,8 @@ ptr = zone->calloc(zone, num_items, size);
 
 我们如果直接去找 `calloc`，就会递归了，所以我们需要点进去，然后我们会发现一个很复杂的东西出现了:
 
-[![](https://user-gold-cdn.xitu.io/2019/12/24/16f35265b4c07f50?w=680&h=274&f=jpeg&s=60910)](https://imgchr.com/i/Q7kfL4)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119021755.jpg)
+
 
 这里我们可以直接在断点处使用 `LLDB` 命令打印这行代码来看具体实现是位于哪个文件中
 
@@ -183,13 +180,12 @@ segregated_size_to_fit(nanozone_t *nanozone, size_t size, size_t *pKey)
   - 因为内存是连续的，通过 16 字节对齐规避风险和容错，防止访问溢出
   - 同时，也提高了寻址访问效率，也就是**空间换时间**
 
-[![](https://user-gold-cdn.xitu.io/2019/12/24/16f35265b5c3cf95?w=680&h=707&f=png&s=189346)](https://imgchr.com/i/Q7eJv6)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119021811.jpg)
 
-<a name="GhMIX"></a>
-# 二、`isa` 底层探索
 
-<a name="c69c2adf"></a>
-## 2.1 联合体位域
+# `isa` 底层探索
+
+## 联合体位域
 
 ```objectivec
 union isa_t {
@@ -208,10 +204,9 @@ union isa_t {
 
 我们探索 `isa` 的时候，会发现 `isa` 其实是一个联合体，而这其实是从内存管理层面来设计的，因为联合体是所有成员共享一个内存，联合体内存的大小取决于内部成员内存大小最大的那个元素，对于 `isa` 指针来说，就不用额外声明很多的属性，直接在内部的 `ISA_BITFIELD` 保存信息。同时由于联合体属性间是互斥的，所以 `cls` 和 `bits` 在 `isa` 初始化流程时是在两个分支中被赋值的。
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/24/16f35265b865e5f1?w=1212&h=1052&f=png&s=765507)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119021845.jpg)
 
-<a name="b98d0c8d"></a>
-## 2.2 isa 结构
+## isa 结构
 
 `isa` 作为一个联合体，有一个结构体属性为 `ISA_BITFIELD`，其大小为 8 个字节，也就是 64 位。<br />下面的代码是基于 `arm64` 架构的:
 
@@ -241,8 +236,7 @@ union isa_t {
 - has_sidetable_rc: 当对象引用技术大于 10 时，则需要借用该变量存储进位
 - extra_rc: 当表示该对象的引用计数值，实际上是引用计数值减 1， 例如，如果对象的引用计数为 10，那么 extra_rc 为 9。如果引用计数大于 10， 则需要使用到下面的 has_sidetable_rc。
 
-<a name="H7vwo"></a>
-## 2.3 isa 关联对象和类
+## isa 关联对象和类
 
 `isa` 是对象中的第一个属性，因为这一步是在继承的时候发生的，要早于对象的成员变量，属性列表，方法列表以及所遵循的协议列表。
 
@@ -258,7 +252,8 @@ newisa.shiftcls = (uintptr_t)cls >> 3;
 
 通过 `LLDB` 进行调试打印，我们可以知道一个对象的 `isa` 会关联到这个对象所属的类。
 
-![](https://user-gold-cdn.xitu.io/2019/12/24/16f35265eb174e37?w=1692&h=630&f=jpeg&s=266761)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119021910.jpg)
+
 
 这里的左移右移操作其实很好理解，首先我们先观察 `isa` 的 `ISA_BITFIELD` 位域的结构:
 
@@ -307,11 +302,9 @@ return (Class)(isa.bits & ISA_MASK);
 
 我们直接将对象的 `isa` 地址与上这个mask之后，就会得到 `object.class` 一样的内存地址。
 
-<a name="12e70060"></a>
-## 2.4 isa 走位分析
+## isa 走位分析
 
-<a name="869985ca"></a>
-### 2.4.1 类与元类
+### 类与元类
 
 我们都知道对象可以创建多个，但是类是否可以创建多个呢?<br />答案很简单，一个。那么如果来验证呢?
 
@@ -352,7 +345,8 @@ LGTeacher
 
 也就是下面的这种关系:
 
-![](https://user-gold-cdn.xitu.io/2019/12/24/16f35265eb419418?w=470&h=131&f=png&s=4319)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119021925.jpg)
+
 
 ```oc
 (lldb) p/x 0x001d8001000013f9 & 0x00007ffffffffff8
@@ -369,23 +363,24 @@ LGTeacher
 NSObject
 ```
 
-<a name="75d38a5f"></a>
-### 2.4.2 isa 走位
+### isa 走位
 
 我们在 Xcode 中测试有以下结果：
 
-![](https://user-gold-cdn.xitu.io/2019/12/24/16f35265ee276b43?w=662&h=508&f=jpeg&s=123612)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119021938.jpg)
+
 
 由此可以给出官方的经典 `isa` 走位图
 
-![](https://user-gold-cdn.xitu.io/2019/12/24/16f35265f729a19f?w=1144&h=1180&f=png&s=248458)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119022003.jpg)
 
-<a name="6e99482c"></a>
-## 2.5 isa 初始化流程图
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/24/16f35265f7c6bd44?w=1370&h=1621&f=png&s=177793)
-<a name="wuBQx"></a>
-# 三、对象的本质
+## isa 初始化流程图
+
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119022016.jpg)
+
+
+# 对象的本质
 
 在我们认知里面，`OC` 对象的本质就是一个结构体，这个结论在 `libObjc` 源码的 `objc-private.h` 源文件中可以得到证实。
 
@@ -430,16 +425,16 @@ clang -rewrite-objc main.m -o main.cpp
 
 这行命令会把我们的 `main.m` 文件编译成 `C++` 格式，输出为 `main.cpp`。
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/24/16f352661273fee4?w=958&h=528&f=png&s=82472)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119022040.jpg)
+
 
 我们可以看到 `LGPerson` 对象在底层其实是一个结构体 `objc_object` 。
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/24/16f3526624819958?w=612&h=94&f=png&s=9884)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119022051.jpg)
 
 而我们的 `Class` 在底层也是一个结构体 `objc_class` 。
 
-<a name="G7JLN"></a>
-# 四、总结
+# 总结
 
 至此， `iOS` 底层探索之对象篇更新完毕，现在来回顾一下我们所探索的内容。
 
@@ -448,4 +443,5 @@ clang -rewrite-objc main.m -o main.cpp
 - 字节对齐算法
 - isa 初始化和走位
 - 对象的本质
+
 
