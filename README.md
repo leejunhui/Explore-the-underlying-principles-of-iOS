@@ -1,6 +1,6 @@
 # Explore-the-underlying-principles-of-iOS
 
-![iOS 底层探索](https://github.com/LeeJunhui/Explore-the-underlying-principles-of-iOS/blob/master/img/Cover.png)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119023407.jpg)
 
 # 探索 `iOS` 底层原理
 
@@ -12,3 +12,18 @@
 
 [iOS 底层探索 - calloc 和 isa](https://github.com/LeeJunhui/Explore-the-underlying-principles-of-iOS/blob/master/iOS%20%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2%20-%20calloc%20%E5%92%8C%20isa.md)
 
+[iOS 底层探索 - 类](https://github.com/LeeJunhui/Explore-the-underlying-principles-of-iOS/blob/master/iOS-%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2%20-%20%E7%B1%BB.md)
+
+[iOS 底层探索 - cache_t](#)
+
+[iOS 底层探索 - 方法](#)
+
+[iOS 底层探索 - 消息查找](#)
+
+[iOS 底层探索 - 消息转发](#)
+
+[iOS 底层探索 - 应用加载](#)
+
+[iOS 底层探索 - 类的加载](#)
+
+[iOS 底层探索 - 分类的加载](#)
