@@ -1,32 +1,32 @@
-![iOS底层探索-alloc&init](https://upload-images.jianshu.io/upload_images/95471-8a1928753369c11d.png?imageMogr2/auto-orient/strip|imageView2/2/w/1200/format/webp)
+![iOS 底层探索 - alloc _ init](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200118230850.jpg)
 
-<a name="BrezX"></a>
 # alloc & init 探索
 
 作为 `iOS` 开发者，我们每天打交道最多的应该就是对象了，从面向对象设计的角度来说，对象的创建以及初始化是最基础的内容。那么，今天我们就一起来探索一下 `iOS` 中最常用的 `alloc` 和 `init`  的底层是怎么实现的吧。
-
-<a name="LrrLo"></a>
-## 一、 如何进行底层探索
+<!-- more -->
+## 如何进行底层探索
 
 对于第三方开源框架来说，我们去剖析内部原理和细节是有一定的方法和套路可以掌握的。而对于 `iOS`  底层，特别是 `OC` 底层，我们可能就需要用到一些开发中不是很常用的方法。
 
 我们这个系列主要的目的是为了进行底层探索，那么我们作为 `iOS` 开发者，需要关注应该就是从应用启动到应用被 `kill` 掉这一整个生命周期的内容。我们不妨从我们最熟悉的 `main` 函数开始，一般来说，我们在 `main.m` 文件中打一个断点，左侧的调用堆栈视图应该如下图所示:
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f309764e942815?w=964&h=738&f=png&s=733652)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200118231019.jpg)
+
 
 > 要得到这样的调用堆栈有两个注意点:
 > - 需要关闭 `Xcode` 左侧 `Debug` 区域最下面的 `show only stack frames with debug symbols and between libraries`
 > 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f309764ea68f14?w=902&h=74&f=png&s=31589)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200118231041.jpg)
+
 > 
 > - 需要增加一个 `_objc_init` 的符号端点
 > 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f309764eb9c302)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200118234802.jpg)
 
 
 我们通过上面的调用堆栈信息不难得出一个简单粗略的加载流程结构
 
-![iOS粗略流程](https://user-gold-cdn.xitu.io/2019/12/23/16f309764fee5427?w=783&h=314&f=png&s=7869)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200118231138.jpg)
 
 
 我们现在心中建立这么一个简单的流程结构，在后期分析底层的时候我们会回过头来梳理整个启动的流程。
@@ -41,40 +41,47 @@ NSObject *p = [NSObject alloc];
 
 我们按照常规探索源码的方式，直接按住 `Command` + `Control` 来进入到 `alloc` 内部实现，但结果并非如我们所愿，我们来到的是一个头文件，只有 `alloc` 方法的声明，并没有对应的实现。这个时候，我们会陷入深深的怀疑中，其实这个时候我们只要记住下面三种常用探索方式就能迎刃而解：
 
-<a name="E9Zl4"></a>
-### 1.1 直接下代码断点
+
+### 直接下代码断点
 具体操作方式为 `Control` + `in` 
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f3097652ddbabe?w=372&h=66&f=png&s=4558) 这里的 `in` 指的是左侧图片中红色部分的按钮，其实这里的操作叫做 `Step into instruction` 。我们可以来到下图这里
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119014943.jpg)
+ 这里的 `in` 指的是左侧图片中红色部分的按钮，其实这里的操作叫做 `Step into instruction` 。我们可以来到下图这里
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f3097654fd6365?w=1884&h=400&f=png&s=191365)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119014959.jpg)
+
 
 我们观察不难得出我们想要找的就是 `libobjc.A.dylib` 这个动态链接库了。
 
-<a name="NaJlI"></a>
-### 1.2 打开反汇编显示
+
+### 打开反汇编显示
 具体操作方式为打开 `Debug` 菜单下的 `Debug Workflow` 下的 `Always Show Disassembly` 
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f309767976e057?w=1022&h=224&f=png&s=253989)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119015038.jpg)
+
 
 接着我们还是下代码断点，然后一步一步调试也会来到下图这里:
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f309767e89d29f?w=1940&h=384&f=png&s=188650)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119015127.jpg)
 
-<a name="4Xnxg"></a>
-### 1.3 下符号断点
+
+
+### 下符号断点
 我们先选择 `Symbolic Breakpoint`，然后输入 `objc_alloc` ，如下图所示：
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f3097683a7e518?w=424&h=268&f=png&s=109931) ![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f309768d2e6bc1?w=952&h=382&f=png&s=565114)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119015148.jpg)
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f30976adf97036?w=1942&h=378&f=png&s=188236)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119015201.jpg)
+
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119015214.jpg)
+
 
 至此，我们得到了 `alloc` 实现位于 `libObjc` 这个动态库，而刚好苹果已经开源了这部分的代码，所以我们可以在 [苹果开源官网 最新版本 10.14.5](https://opensource.apple.com/release/macos-10145.html) 上下载即可。最新的 `libObc` 为 756。
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f309768dc0fe81?w=1312&h=48&f=png&s=6144)
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119015229.jpg)
 
-<a name="Udab2"></a>
-## 二、 探索 `libObjc` 源码
+
+## 探索 `libObjc` 源码
 我们下载了 `libObjc` 的源码到我们的电脑上后是不能直接运行的，我们需要进行一定的配置才能实现源码追踪流程。这一块内容不在本文范围内，读者可参考 [iOS_objc4-756.2 最新源码编译调试](https://juejin.im/post/5d9c829df265da5ba46f49c9)。
 
 配置好 `libObjc` 之后，我们新建一个命令行的项目，然后运行如下代码:
@@ -83,8 +90,7 @@ NSObject *p = [NSObject alloc];
 NSObject *myObj = [NSObject alloc];
 ```
 
-<a name="41cMh"></a>
-### 2.1 objc_alloc
+### objc_alloc
 然后我们直接下符号断点 `objc_alloc` ，然后一步步调试，先来到的是 `objc_alloc` 
 
 ```objectivec
@@ -96,8 +102,7 @@ objc_alloc(Class cls)
 }
 ```
 
-<a name="E0Er7"></a>
-### 2.2 第一次 callAlloc
+### 第一次 callAlloc
 然后会来到 `callAlloc` 方法，注意这里第三个参数传的是 `false` 
 
 ```objectivec
@@ -141,8 +146,7 @@ callAlloc(Class cls, bool checkNil, bool allocWithZone=false)
 }
 ```
 
-<a name="jYuXk"></a>
-### 2.3 _objc_rootAlloc
+### _objc_rootAlloc
 因为我们在 `objc_init`  中传入的第三个参数 `allocWithZone` 是 `true` ，并且我们的 `cls` 为 `NSObject` ，那么也就是说会这里直接来到 `return [cls alloc]` 。我们接着往下走会来到 `alloc` 方法：<br /> 
 ```objectivec
 + (id)alloc {
@@ -162,8 +166,7 @@ _objc_rootAlloc(Class cls)
 }
 ```
 
-<a name="gvdcC"></a>
-### 2.4 第二次 callAlloc
+### 第二次 callAlloc
 
 是不是有点似曾相似，没错，我们第一步进入的 `objc_init` 也是调用的 `callAlloc` 方法，但是这里有两个参数是不一样的，第二个参数 `checkNil` 是否需要判空直接传的是 `false` ，站在系统角度，前面已经在第一次调用 `callAlloc`  的时候进行了判空了，所以这里没必要再次进行判空的了。第三个参数 `allocWithZone` 传的是 `true` ，关于这个方法，我查阅了苹果开发者文档，文档解释如下:
 
@@ -287,11 +290,13 @@ _class_createInstanceFromZone(Class cls, size_t extraBytes, void *zone,
 }
 ```
 
-至此，我们的 `alloc` 流程就探索完毕，但在这其中我们还是有一些疑问点，比如，对象的内存大小时怎么确定出来的， `isa` 是怎么初始化出来的呢，没关系，我们下一篇接着探索。这里，先给出笔者自己画的一个 `alloc` 流程图，限于笔者水平有限，有错误之处望读者指出:
+至此，我们的 `alloc` 流程就探索完毕，但在这其中我们还是有一些疑问点，比如，对象的内存大小时怎么确定出来的， `isa` 是怎么初始化出来的呢，没关系，我们下一篇接着探索。这里，先给出笔者自己画的一个 `alloc` 流程图:
 
-![image.png](https://user-gold-cdn.xitu.io/2019/12/23/16f30976af136d0d?w=1769&h=1430&f=png&s=162905)
-<a name="bW4k0"></a>
-### 2.5 init 简略分析
+![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119015244.jpg)
+
+
+
+### init 简略分析
 分析完了 `alloc` 的流程，我们接着分析 `init` 的流程。相比于 `alloc` 来说， `init` 内部实现十分简单，先来到的是 `_objc_rootInit` ，然后就直接返回 `obj` 了。其实这里是一种抽象工厂设计模式的体现，对于 `NSObject` 自带的 `init` 方法来说，其实啥也没干，但是如果你继承于 `NSObject` 的话，然后就可以去重写 `initWithXXX` 之类的初始化方法来做一些初始化操作。
 
 ```objectivec
@@ -308,8 +313,7 @@ _objc_rootInit(id obj)
 }
 ```
 
-<a name="hS9D9"></a>
-## 三、总结
+## 总结
 
 先秦荀子的劝学中有言:
 
