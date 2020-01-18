@@ -1,10 +1,8 @@
 ![iOS 底层探索 - alloc _ init](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200118230850.jpg)
 
-# alloc & init 探索
-
 作为 `iOS` 开发者，我们每天打交道最多的应该就是对象了，从面向对象设计的角度来说，对象的创建以及初始化是最基础的内容。那么，今天我们就一起来探索一下 `iOS` 中最常用的 `alloc` 和 `init`  的底层是怎么实现的吧。
-<!-- more -->
-## 如何进行底层探索
+
+# 如何进行底层探索
 
 对于第三方开源框架来说，我们去剖析内部原理和细节是有一定的方法和套路可以掌握的。而对于 `iOS`  底层，特别是 `OC` 底层，我们可能就需要用到一些开发中不是很常用的方法。
 
@@ -42,7 +40,7 @@ NSObject *p = [NSObject alloc];
 我们按照常规探索源码的方式，直接按住 `Command` + `Control` 来进入到 `alloc` 内部实现，但结果并非如我们所愿，我们来到的是一个头文件，只有 `alloc` 方法的声明，并没有对应的实现。这个时候，我们会陷入深深的怀疑中，其实这个时候我们只要记住下面三种常用探索方式就能迎刃而解：
 
 
-### 直接下代码断点
+## 直接下代码断点
 具体操作方式为 `Control` + `in` 
 
 ![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119014943.jpg)
@@ -54,7 +52,7 @@ NSObject *p = [NSObject alloc];
 我们观察不难得出我们想要找的就是 `libobjc.A.dylib` 这个动态链接库了。
 
 
-### 打开反汇编显示
+## 打开反汇编显示
 具体操作方式为打开 `Debug` 菜单下的 `Debug Workflow` 下的 `Always Show Disassembly` 
 
 ![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119015038.jpg)
@@ -66,7 +64,7 @@ NSObject *p = [NSObject alloc];
 
 
 
-### 下符号断点
+## 下符号断点
 我们先选择 `Symbolic Breakpoint`，然后输入 `objc_alloc` ，如下图所示：
 
 ![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119015148.jpg)
@@ -81,7 +79,7 @@ NSObject *p = [NSObject alloc];
 ![](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119015229.jpg)
 
 
-## 探索 `libObjc` 源码
+# 探索 `libObjc` 源码
 我们下载了 `libObjc` 的源码到我们的电脑上后是不能直接运行的，我们需要进行一定的配置才能实现源码追踪流程。这一块内容不在本文范围内，读者可参考 [iOS_objc4-756.2 最新源码编译调试](https://juejin.im/post/5d9c829df265da5ba46f49c9)。
 
 配置好 `libObjc` 之后，我们新建一个命令行的项目，然后运行如下代码:
@@ -90,7 +88,7 @@ NSObject *p = [NSObject alloc];
 NSObject *myObj = [NSObject alloc];
 ```
 
-### objc_alloc
+## objc_alloc
 然后我们直接下符号断点 `objc_alloc` ，然后一步步调试，先来到的是 `objc_alloc` 
 
 ```objectivec
@@ -102,7 +100,7 @@ objc_alloc(Class cls)
 }
 ```
 
-### 第一次 callAlloc
+## 第一次 callAlloc
 然后会来到 `callAlloc` 方法，注意这里第三个参数传的是 `false` 
 
 ```objectivec
@@ -146,7 +144,7 @@ callAlloc(Class cls, bool checkNil, bool allocWithZone=false)
 }
 ```
 
-### _objc_rootAlloc
+## _objc_rootAlloc
 因为我们在 `objc_init`  中传入的第三个参数 `allocWithZone` 是 `true` ，并且我们的 `cls` 为 `NSObject` ，那么也就是说会这里直接来到 `return [cls alloc]` 。我们接着往下走会来到 `alloc` 方法：<br /> 
 ```objectivec
 + (id)alloc {
@@ -166,7 +164,7 @@ _objc_rootAlloc(Class cls)
 }
 ```
 
-### 第二次 callAlloc
+## 第二次 callAlloc
 
 是不是有点似曾相似，没错，我们第一步进入的 `objc_init` 也是调用的 `callAlloc` 方法，但是这里有两个参数是不一样的，第二个参数 `checkNil` 是否需要判空直接传的是 `false` ，站在系统角度，前面已经在第一次调用 `callAlloc`  的时候进行了判空了，所以这里没必要再次进行判空的了。第三个参数 `allocWithZone` 传的是 `true` ，关于这个方法，我查阅了苹果开发者文档，文档解释如下:
 
@@ -296,7 +294,7 @@ _class_createInstanceFromZone(Class cls, size_t extraBytes, void *zone,
 
 
 
-### init 简略分析
+## init 简略分析
 分析完了 `alloc` 的流程，我们接着分析 `init` 的流程。相比于 `alloc` 来说， `init` 内部实现十分简单，先来到的是 `_objc_rootInit` ，然后就直接返回 `obj` 了。其实这里是一种抽象工厂设计模式的体现，对于 `NSObject` 自带的 `init` 方法来说，其实啥也没干，但是如果你继承于 `NSObject` 的话，然后就可以去重写 `initWithXXX` 之类的初始化方法来做一些初始化操作。
 
 ```objectivec
@@ -313,7 +311,7 @@ _objc_rootInit(id obj)
 }
 ```
 
-## 总结
+# 总结
 
 先秦荀子的劝学中有言:
 
