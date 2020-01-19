@@ -12,9 +12,9 @@
 
 [iOS 底层探索 - 类](https://github.com/LeeJunhui/Explore-the-underlying-principles-of-iOS/blob/master/iOS-%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2%20-%20%E7%B1%BB.md)
 
-[iOS 底层探索 - cache_t](#)
+[iOS 底层探索 - cache_t](https://github.com/LeeJunhui/Explore-the-underlying-principles-of-iOS/blob/master/iOS-%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2%20-%20cache-t.md)
 
-[iOS 底层探索 - 方法](#)
+[iOS 底层探索 - 方法](https://github.com/LeeJunhui/Explore-the-underlying-principles-of-iOS/blob/master/iOS-%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2%20-%20%E6%96%B9%E6%B3%95.md)
 
 [iOS 底层探索 - 消息查找](#)
 
