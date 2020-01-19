@@ -1,7 +1,7 @@
 ![iOS 底层探索 - cache_t](https://raw.githubusercontent.com/LeeJunhui/blog_images/master/20200119023941.jpg)
 
 上一篇我们一起探索了 `iOS` 类的底层原理，其中比较重要的四个属性我们都简单的过了一遍，我们接下来要重点探索第三个属性 `cache_t`，对于这个属性，我们可以学习到苹果对于缓存的设计与理解，同时也会接触到消息发送相关的知识。
-<!-- more -->
+
 # 探索 `cache_t`
 
 ## `cache_t` 基本结构
@@ -114,11 +114,11 @@ struct method_t {
 
 此时 `_ocuupied` 值已经为 3 了，我们回顾一下当前缓存里面缓存的方法:
 
-| _ocuupied 的值 | 缓存的方法 |
-| --- | --- |
-| 1 | NSObject下的`init` |
-| 2 | NSObject下的`init`，person下的 `sayHello` |
-| 3 | NSObject下的`init`，person下的 `sayHello`, person下的 `sayCode` |
+| _ocuupied 的值 | 缓存的方法                                                      |
+| -------------- | --------------------------------------------------------------- |
+| 1              | NSObject下的`init`                                              |
+| 2              | NSObject下的`init`，person下的 `sayHello`                       |
+| 3              | NSObject下的`init`，person下的 `sayHello`, person下的 `sayCode` |
 
 
 那么，当我们的断点断到下一行的时候，是不是 `_ocuupied` 就会变为 4 呢? 我们接着往下走：
