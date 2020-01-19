@@ -16,9 +16,9 @@
 
 [iOS 底层探索 - 方法](https://github.com/LeeJunhui/Explore-the-underlying-principles-of-iOS/blob/master/iOS-%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2%20-%20%E6%96%B9%E6%B3%95.md)
 
-[iOS 底层探索 - 消息查找](#)
+[iOS 底层探索 - 消息查找](https://github.com/LeeJunhui/Explore-the-underlying-principles-of-iOS/blob/master/iOS-%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2%20-%20%E6%B6%88%E6%81%AF%E6%9F%A5%E6%89%BE.md)
 
-[iOS 底层探索 - 消息转发](#)
+[iOS 底层探索 - 消息转发](https://github.com/LeeJunhui/Explore-the-underlying-principles-of-iOS/blob/master/iOS-%E5%BA%95%E5%B1%82%E6%8E%A2%E7%B4%A2%20-%20%E6%B6%88%E6%81%AF%E8%BD%AC%E5%8F%91.md)
 
 [iOS 底层探索 - 应用加载](#)
 
